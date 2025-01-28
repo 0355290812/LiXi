@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lì Xì Tết</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌸 Chúc Mừng Năm Mới 🌸</h1>
+        <h3>Nhập tên và chọn một lì xì để nhận lộc đầu năm!</h3>
+
+        <!-- Form nhập tên -->
+        <input type="text" id="userName" placeholder="Nhập tên của bạn" class="name-input" />
+        <div class="envelopes">
+            <div class="envelope" onclick="openEnvelope(1)">🧧</div>
+            <div class="envelope" onclick="openEnvelope(2)">🧧</div>
+            <div class="envelope" onclick="openEnvelope(3)">🧧</div>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function openEnvelope(index) {
+            const name = document.getElementById("userName").value.trim();
+            if (!name) {
+                document.getElementById("result").innerHTML =
+                    "<p style='color: red;'>Vui lòng nhập tên của bạn!</p>";
+                return;
+            }
+
+            const response = await fetch("/api/liexi", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ name }),
+            });
+
+            const data = await response.json();
+            if (response.status === 400) {
+                document.getElementById("result").innerHTML = `<p style='color: red;'>${data.message}</p>`;
+            } else {
+                document.getElementById("result").innerHTML = `
+            <h2>${data.message}</h2>
+            <h3>${data.value.toLocaleString()} VND 🎉</h3>
+          `;
+            }
+        }
+    </script>
+</body>
+
+
+</html>
