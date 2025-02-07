@@ -5,65 +5,32 @@ const path = require("path");
 const app = express();
 const PORT = 3000;
 
-// Kết nối MongoDB
-mongoose.connect("mongodb+srv://ha2kv3:tZdFqljkfYnPYn8Y@cluster0.lgvys.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => {
-    console.log("Connected to MongoDB");
-}).catch((error) => {
-    console.error("Error connecting to MongoDB", error);
-});
-
-// Tạo schema và model cho Lì xì
-const liXiSchema = new mongoose.Schema({
-    value: Number,
-    name: String,
-});
-
-const LiXi = mongoose.model("LiXi", liXiSchema);
+// Hàm chọn giá trị với tỉ lệ: 10.000 (90%), 20.000 (9%), 50.000 (1%)
+function getRandomValue() {
+    const r = Math.random(); // trả về số ngẫu nhiên từ 0 đến 1
+    if (r < 0.90) {
+        return 10000;
+    } else if (r < 0.99) { // từ 0.90 đến 0.99 (tương đương 9%)
+        return 20000;
+    } else {
+        return 50000; // từ 0.99 đến 1 (tương đương 1%)
+    }
+}
 
 // Middleware
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.set("view engine", "ejs");
 
-// API để nhận lì xì
-app.get("/api/liexi", async (req, res) => {
-    const randomValues = [10000, 20000, 50000];
-    const randomIndex = Math.floor(Math.random() * randomValues.length);
-    const randomLiXi = new LiXi({ value: randomValues[randomIndex] });
-    await randomLiXi.save();
-    res.json(randomLiXi);
-});
-
+// API để nhận lì xì theo POST
 app.post("/api/liexi", async (req, res) => {
-    const { name } = req.body;
-
-    if (!name || name.trim() === "") {
-        return res.status(400).json({ message: "Vui lòng nhập tên!" });
-    }
 
     // Kiểm tra tên đã nhận lì xì chưa
-    const existingLiXi = await LiXi.findOne({ name });
-    if (existingLiXi) {
-        return res.status(400).json({
-            message: `Nhận lì xì rùi mà!`,
-        });
-    }
-
-    // Giá trị lì xì (thêm các giá trị mới)
-    const randomValues = [1000, 2000, 5000, 10000, 20000, 50000];
-    const randomIndex = Math.floor(Math.random() * randomValues.length);
-    const randomValue = randomValues[randomIndex];
-
-    // Lưu lì xì vào cơ sở dữ liệu
-    const liXi = new LiXi({ name, value: randomValue });
-    await liXi.save();
+    const randomValue = getRandomValue();
 
     res.json({
-        message: `Chúc mừng năm mới, ${name}! Bạn đã nhận được:`,
-        value: liXi.value,
+        message: `Chúc mừng năm mới! Chúc mừng quý khách đã nhận được`,
+        value: randomValue,
     });
 });
 

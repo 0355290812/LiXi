@@ -2,56 +2,200 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lì Xì Tết</title>
     <link rel="stylesheet" href="https://lixi-xajh.onrender.com/style.css">
+    <style>
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-20px);
+            }
+
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .envelope.animate {
+            animation: bounce 0.5s;
+        }
+
+        /* Animation cho kết quả hiển thị: fadeIn */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        /* CSS cho nút "Bốc lại" */
+        .button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #d12e2e;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .button:hover {
+            background-color: #ff6f61;
+            transform: scale(1.1);
+        }
+
+        /* CSS cho hiệu ứng hoa đào rơi */
+        .flower-container {
+            position: fixed;
+            top: -50px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: fall linear infinite;
+        }
+
+        .flower {
+            font-size: 24px;
+            animation: spin 5s linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(110vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
         <h1>🌸 Chúc Mừng Năm Mới 🌸</h1>
-        <h3>Nhập tên và chọn một lì xì để nhận lộc đầu năm!</h3>
+        <h3>Bốc lì xì đầu năm may mắn nào!</h3>
 
-        <!-- Form nhập tên -->
-        <input type="text" id="userName" placeholder="Nhập tên của bạn" class="name-input" />
         <div class="envelopes">
             <div class="envelope" onclick="openEnvelope(1)">🧧</div>
             <div class="envelope" onclick="openEnvelope(2)">🧧</div>
             <div class="envelope" onclick="openEnvelope(3)">🧧</div>
         </div>
+
+        <!-- Kết quả hiển thị -->
         <div id="result"></div>
+
+        <!-- Nút "Bốc lại", ẩn ban đầu -->
+        <button id="retryButton" onclick="resetGame()" style="display: none;" class="button">Bốc lại</button>
     </div>
 
     <script>
         async function openEnvelope(index) {
-            const name = document.getElementById("userName").value.trim();
-            if (!name) {
-                document.getElementById("result").innerHTML =
-                    "<p style='color: red;'>Vui lòng nhập tên của bạn!</p>";
-                return;
-            }
-
+            // Lấy phần tử phong bao được click và thêm lớp animation
+            const envelopeElement = event.target;
+            envelopeElement.classList.add('animate');
+            // Loại bỏ lớp animation sau thời gian animation (0.5s)
+            setTimeout(() => {
+                envelopeElement.classList.remove('animate');
+            }, 500);
+            // Gọi API để nhận lì xì
             const response = await fetch("/api/liexi", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ name }),
+                headers: { "Content-Type": "application/json" },
             });
 
             const data = await response.json();
+            const resultDiv = document.getElementById("result");
+
             if (response.status === 400) {
-                document.getElementById("result").innerHTML = `<p style='color: red;'>${data.message}</p>`;
+                resultDiv.innerHTML = `<p style='color: red;'>${data.message}</p>`;
             } else {
-                document.getElementById("result").innerHTML = `
-            <h2>${data.message}</h2>
-            <h3>${data.value.toLocaleString()} VND 🎉</h3>
-          `;
+                resultDiv.innerHTML = `
+          <h2>${data.message}</h2>
+          <h3>${data.value.toLocaleString()} VND 🎉</h3>
+        `;
+                resultDiv.classList.add('fade-in');
+                setTimeout(() => {
+                    resultDiv.classList.remove('fade-in');
+                }, 500);
+            }
+
+            // Hiện nút "Bốc lại"
+            document.getElementById("retryButton").style.display = "block";
+            // Tạo hiệu ứng hoa đào rơi khi bấm bốc lì xì
+            createFallingFlowers();
+        }
+
+        function resetGame() {
+            // Xóa kết quả hiển thị
+            document.getElementById("result").innerHTML = "";
+            // Ẩn nút "Bốc lại"
+            document.getElementById("retryButton").style.display = "none";
+            // Xóa các phần tử hoa đào hiện có (nếu còn)
+            document.querySelectorAll('.flower-container').forEach(flower => flower.remove());
+        }
+
+        function createFallingFlowers() {
+            const numFlowers = 50; // Số lượng hoa đào rơi
+            for (let i = 0; i < numFlowers; i++) {
+                const flowerContainer = document.createElement('div');
+                flowerContainer.className = 'flower-container';
+                // Đặt vị trí ngang ngẫu nhiên
+                flowerContainer.style.left = Math.random() * window.innerWidth + 'px';
+                // Thời gian animation ngẫu nhiên từ 5s đến 10s
+                const duration = Math.random() * 5 + 5;
+                flowerContainer.style.animationDuration = duration + 's';
+                // Độ trễ animation ngẫu nhiên từ 0s đến 5s
+                const delay = Math.random() * 5;
+                flowerContainer.style.animationDelay = delay + 's';
+
+                const flower = document.createElement('div');
+                flower.className = 'flower';
+                // Sử dụng emoji hoa đào (🌸)
+                flower.innerText = '🌸';
+                flowerContainer.appendChild(flower);
+                document.body.appendChild(flowerContainer);
+
+                // Xóa hoa sau khi animation hoàn thành (duration + delay)
+                setTimeout(() => {
+                    flowerContainer.remove();
+                }, (duration + delay) * 1000);
             }
         }
     </script>
 </body>
-
 
 </html>
